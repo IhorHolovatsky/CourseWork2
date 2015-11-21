@@ -34,5 +34,10 @@ namespace OOP_project_radar
         public static Pen CIRCLE_PEN = new Pen(Color.LightGreen, 0.03f);
         public static Pen REFRESHER_PEN = new Pen(Color.LimeGreen, 3f);
 
+        public static string[] SHADOW_COLORS =
+        {
+            "#32cd32", "#2db82d", "#28a428", "#238f23", "#1e7b1e", "#196619",
+            "#145214", "#0f3d0f"
+        };
     }
 }

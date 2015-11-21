@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Drawing.Text;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Media.Imaging;
@@ -21,12 +22,11 @@ namespace OOP_project_radar
         private int _centerY;     //center of the circle
         private int _refresherX;
         private int _refresherY;       //HAND coordinate
-        private int _offset = (Constans.BITMAP_WIDTH - Constans.RADAR_WIDTH) / 2;
-        private bool _isReverted = false;
-
+        private readonly int _offset = (Constans.BITMAP_WIDTH - Constans.RADAR_WIDTH) / 2;
+        private bool _isReverted;
+        private readonly List<Point> _shadowArray = new List<Point>(8);
 
         public Bitmap Bmp;
-
         public Graphics G;
 
         public MainWindow()
@@ -40,8 +40,6 @@ namespace OOP_project_radar
 
             //create Bitmap
             Bmp = new Bitmap(Constans.BITMAP_HEIGHT, Constans.BITMAP_WIDTH);
-
-            //background color
 
             //center
             _centerX = Constans.RADAR_WIDTH / 2 + _offset;
@@ -64,6 +62,24 @@ namespace OOP_project_radar
             G.Clear(Color.Black);
 
             DrawRadarBody();
+
+            //we have shadow with 8 lines
+            _shadowArray.Add(new Point(_refresherX, _refresherY));
+            if (_shadowArray.Count == 8)
+            {
+                _shadowArray.Remove(_shadowArray.First());
+            }
+
+            int i = _shadowArray.Capacity-1;
+            //draw Shadow
+            foreach (var point in _shadowArray)
+            {
+                var color = ColorTranslator.FromHtml(Constans.SHADOW_COLORS[i]);
+                var pen = new Pen(new SolidBrush(color), 3f);
+
+                G.DrawLine(pen, new Point(_centerX, _centerY), point);
+                i--;
+            }
 
             //draw HAND
             G.DrawLine(Constans.REFRESHER_PEN, new Point(_centerX, _centerY), new Point(_refresherX, _refresherY));
@@ -178,6 +194,7 @@ namespace OOP_project_radar
         private void btnRevert_OnClick(object sender, RoutedEventArgs e)
         {
             _isReverted = !_isReverted;
+            _shadowArray.Clear();
         }
 
         private void btnStart_OnClick(object sender, RoutedEventArgs e)
@@ -191,6 +208,7 @@ namespace OOP_project_radar
         private void btnRestart_OnClick(object sender, RoutedEventArgs e)
         {
             _currentDegree = 0;
+            _shadowArray.Clear();
 
             if (!_timer.Enabled)
                 _timer.Start();
@@ -198,10 +216,10 @@ namespace OOP_project_radar
 
         #endregion
 
-        private void RangeBase_OnValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        private void Speed_OnValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             _timer.Stop();
-            _timer.Interval = 100/ Convert.ToInt32(e.NewValue);
+            _timer.Interval = 100 / Convert.ToInt32(e.NewValue);
             _timer.Start();
         }
     }
