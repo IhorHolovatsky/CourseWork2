@@ -1,21 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
+using System.Drawing.Text;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Forms;
-
+using System.Windows.Media.Imaging;
+using Point = System.Drawing.Point;
 
 namespace OOP_project_radar
 {
@@ -24,19 +15,20 @@ namespace OOP_project_radar
     /// </summary>
     public partial class MainWindow : Window
     {
-        System.Windows.Forms.Timer t = new System.Windows.Forms.Timer();
+        private readonly Timer _timer = new Timer();
+        private int _currentDegree;  //in degree
+        private int _centerX;
+        private int _centerY;     //center of the circle
+        private int _refresherX;
+        private int _refresherY;       //HAND coordinate
+        private int _offset = (Constans.BITMAP_WIDTH - Constans.RADAR_WIDTH) / 2;
+        private bool _isReverted = false;
 
-        int WIDTH = 300, HEIGHT = 300, HAND = 150;
 
-        int u;  //in degree
-        int cx, cy;     //center of the circle
-        int x, y;       //HAND coordinate
+        public Bitmap Bmp;
 
-        int tx, ty, lim = 20;
+        public Graphics G;
 
-        Bitmap bmp;
-        Pen p;
-        Graphics g;
         public MainWindow()
         {
             InitializeComponent();
@@ -45,95 +37,130 @@ namespace OOP_project_radar
 
         private void Canvas_Loaded(object sender, RoutedEventArgs e)
         {
+
             //create Bitmap
-            bmp = new Bitmap(WIDTH + 1, HEIGHT + 1);
+            Bmp = new Bitmap(Constans.BITMAP_HEIGHT, Constans.BITMAP_WIDTH);
 
             //background color
 
-            
             //center
-            cx = WIDTH / 2;
-            cy = HEIGHT / 2;
+            _centerX = Constans.RADAR_WIDTH / 2 + _offset;
+            _centerY = Constans.RADAR_WIDTH / 2 + _offset;
 
             //initial degree of HAND
-            u = 0;
+            _currentDegree = 0;
 
             //timer
-            t.Interval = 5; //in millisecond
-            t.Tick += new EventHandler(this.t_Tick);
-            t.Start();
+            _timer.Interval = 1; //in millisecond
+            _timer.Tick += ReloadRadar;
+
+            //Draw start position of radar
+            ReloadRadar(null, null);
         }
 
-        private void t_Tick(object sender, EventArgs e)
+        private void ReloadRadar(object sender, EventArgs e)
         {
-            //pen
-            p = new Pen(Color.Green, 1f);
+            G = Graphics.FromImage(Bmp);
+            G.Clear(Color.Black);
 
-            //graphics
-            g = Graphics.FromImage(bmp);
-
-            //calculate x, y coordinate of HAND
-            int tu = (u - lim) % 360;
-
-            if (u >= 0 && u <= 180)
-            {
-                //right half
-                //u in degree is converted into radian.
-
-                x = cx + (int)(HAND * Math.Sin(Math.PI * u / 180));
-                y = cy - (int)(HAND * Math.Cos(Math.PI * u / 180));
-            }
-            else
-            {
-                x = cx - (int)(HAND * -Math.Sin(Math.PI * u / 180));
-                y = cy - (int)(HAND * Math.Cos(Math.PI * u / 180));
-            }
-
-            if (tu >= 0 && tu <= 180)
-            {
-                //right half
-                //tu in degree is converted into radian.
-
-                tx = cx + (int)(HAND * Math.Sin(Math.PI * tu / 180));
-                ty = cy - (int)(HAND * Math.Cos(Math.PI * tu / 180));
-            }
-            else
-            {
-                tx = cx - (int)(HAND * -Math.Sin(Math.PI * tu / 180));
-                ty = cy - (int)(HAND * Math.Cos(Math.PI * tu / 180));
-            }
-
-            //draw circle
-            g.DrawEllipse(p, 0, 0, WIDTH, HEIGHT);  //bigger circle
-            g.DrawEllipse(p, 80, 80, WIDTH - 160, HEIGHT - 160);    //smaller circle
-
-            //draw perpendicular line
-            g.DrawLine(p, new System.Drawing.Point(cx, 0), new System.Drawing.Point(cx, HEIGHT)); // UP-DOWN
-            g.DrawLine(p, new System.Drawing.Point(0, cy), new System.Drawing.Point(WIDTH, cy)); //LEFT-RIGHT
+            DrawRadarBody();
 
             //draw HAND
-            g.DrawLine(new Pen(Color.Black, 1f), new System.Drawing.Point(cx, cy), new System.Drawing.Point(tx, ty));
-            g.DrawLine(p, new System.Drawing.Point(cx, cy), new System.Drawing.Point(x, y));
+            G.DrawLine(Constans.REFRESHER_PEN, new Point(_centerX, _centerY), new Point(_refresherX, _refresherY));
 
             //load bitmap in picturebox1
-            ImageBox.Source = BitmapToImageSource(bmp);
+            ImageBox.Source = BitmapToImageSource(Bmp);
 
             //dispose
-            p.Dispose();
-            g.Dispose();
+            G.Dispose();
 
             //update
-            u++;
-            if (u == 360)
+            if (_isReverted)
             {
-                u = 0;
+                _currentDegree--;
+                if (_currentDegree == 0)
+                {
+                    _currentDegree = 360;
+                }
+            }
+            else
+            {
+                _currentDegree++;
+                if (_currentDegree == 360)
+                {
+                    _currentDegree = 0;
+                }
             }
         }
+
+        /// <summary>
+        /// Draw Axes & Axes labels , Circles and graduation
+        /// </summary>
+        private void DrawRadarBody()
+        {
+            if (_currentDegree >= 0 && _currentDegree <= 180)
+            {
+                //right half
+                _refresherX = _centerX + (int)(Constans.HAND * Math.Sin(Math.PI * _currentDegree / 180));
+                _refresherY = _centerY - (int)(Constans.HAND * Math.Cos(Math.PI * _currentDegree / 180));
+            }
+            else
+            {
+                _refresherX = _centerX - (int)(Constans.HAND * -Math.Sin(Math.PI * _currentDegree / 180));
+                _refresherY = _centerY - (int)(Constans.HAND * Math.Cos(Math.PI * _currentDegree / 180));
+            }
+
+            // Constans.FIRST_CIRCLE_WIDTH/2 - radius, and then div for 4 - because we have 4 circles
+            var circleOffset = Constans.FIRST_CIRCLE_WIDTH / 2 / 4;
+            //draw circle
+            G.DrawEllipse(Constans.CIRCLE_PEN, _offset, _offset, Constans.FIRST_CIRCLE_WIDTH, Constans.FIRST_CIRCLE_HEIGHT);
+            //bigger circle
+            G.DrawEllipse(Constans.CIRCLE_PEN, _offset + circleOffset, _offset + circleOffset, Constans.SECOND_CIRCLE_WIDTH,
+                Constans.SECOND_CIRCLE_HEIGHT); //smaller circle
+            G.DrawEllipse(Constans.CIRCLE_PEN, _offset + 2 * circleOffset, _offset + 2 * circleOffset, Constans.THIRD_CIRCLE_WIDTH,
+                Constans.THIRD_CIRCLE_HEIGHT); //smaller circle
+            G.DrawEllipse(Constans.CIRCLE_PEN, _offset + 3 * circleOffset, _offset + 3 * circleOffset, Constans.FOURTH_CIRCLE_WIDTH,
+                Constans.FOURTH_CIRCLE_HEIGHT); //smaller circle
+
+            //draw perpendicular line
+            G.DrawLine(Constans.AXIS_PEN, new Point(_centerX, 0), new Point(_centerX, Constans.BITMAP_HEIGHT)); // UP-DOWN
+            G.DrawLine(Constans.AXIS_PEN, new Point(0, _centerY), new Point(Constans.BITMAP_WIDTH, _centerY)); //LEFT-RIGHT
+
+            //draw diagonal lines
+            G.DrawLine(Constans.AXIS_PEN, new Point(0, 0), new Point(Constans.BITMAP_WIDTH, Constans.BITMAP_HEIGHT)); // UP-DOWN
+            G.DrawLine(Constans.AXIS_PEN, new Point(0, Constans.BITMAP_WIDTH), new Point(Constans.BITMAP_HEIGHT, 0));
+            //LEFT-RIGHT
+
+            //Axes labels
+            G.DrawString("N", new Font("Arial", 16), new SolidBrush(Color.FloralWhite), _centerX - 20, 1);
+            G.DrawString("W", new Font("Arial", 16), new SolidBrush(Color.FloralWhite), 1, _centerY - 20);
+            G.DrawString("E", new Font("Arial", 16), new SolidBrush(Color.FloralWhite), 2 * _centerX - 20, _centerY - 20);
+            G.DrawString("S", new Font("Arial", 16), new SolidBrush(Color.FloralWhite), _centerX, 2 * _centerY - 20);
+
+            //Graduation
+            G.DrawString("0", new Font("Arial", 8), new SolidBrush(Color.FloralWhite), _centerX + 2, 8);
+            G.DrawString("45", new Font("Arial", 8), new SolidBrush(Color.FloralWhite), Constans.BITMAP_WIDTH - _offset - 75 + 3,
+                _offset + 75);
+            G.DrawString("90", new Font("Arial", 8), new SolidBrush(Color.FloralWhite), 2 * _centerX - 20, _centerY + 2);
+            G.DrawString("135", new Font("Arial", 8), new SolidBrush(Color.FloralWhite),
+                Constans.BITMAP_WIDTH - _offset - 75 + 4, Constans.BITMAP_WIDTH - _offset - 75 - 14);
+            G.DrawString("180", new Font("Arial", 8), new SolidBrush(Color.FloralWhite), _centerX - 25, 2 * _centerY - 20);
+            G.DrawString("225", new Font("Arial", 8), new SolidBrush(Color.FloralWhite), _offset + 75 - 5,
+                Constans.BITMAP_WIDTH - _offset - 75 + 5);
+            G.DrawString("270", new Font("Arial", 8), new SolidBrush(Color.FloralWhite), 1, _centerY + 2);
+            G.DrawString("315", new Font("Arial", 8), new SolidBrush(Color.FloralWhite), _offset + 75 - 8, _offset + 75 - 19);
+        }
+
+        /// <summary>
+        /// Transform Bitmap to ImageSource
+        /// </summary>
+        /// <param name="bitmap">Bitmap which need to transform</param>
+        /// <returns>returns BitmapImage (Image Source)</returns>
         public BitmapImage BitmapToImageSource(Bitmap bitmap)
         {
             using (MemoryStream memory = new MemoryStream())
             {
-                bitmap.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
+                bitmap.Save(memory, ImageFormat.Bmp);
                 memory.Position = 0;
                 BitmapImage bitmapimage = new BitmapImage();
                 bitmapimage.BeginInit();
@@ -143,6 +170,39 @@ namespace OOP_project_radar
 
                 return bitmapimage;
             }
+        }
+
+
+        #region BUTTONS handlers
+
+        private void btnRevert_OnClick(object sender, RoutedEventArgs e)
+        {
+            _isReverted = !_isReverted;
+        }
+
+        private void btnStart_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (_timer.Enabled)
+                _timer.Stop();
+            else
+                _timer.Start();
+        }
+
+        private void btnRestart_OnClick(object sender, RoutedEventArgs e)
+        {
+            _currentDegree = 0;
+
+            if (!_timer.Enabled)
+                _timer.Start();
+        }
+
+        #endregion
+
+        private void RangeBase_OnValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            _timer.Stop();
+            _timer.Interval = 100/ Convert.ToInt32(e.NewValue);
+            _timer.Start();
         }
     }
 }
