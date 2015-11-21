@@ -7,7 +7,7 @@
 
         <Border x:Name="CanvasBorder" Margin="0,0,189,66">
             <Canvas  Grid.Column="0" Width ="600" HorizontalAlignment="Left" VerticalAlignment="Top" Height="600"  Loaded="Canvas_Loaded" x:Name="CanvasDraw" Background="Black" d:IsLocked="True" >
-                <Image x:Name="ImageBox"/>
+                <Image Width="600" Height="600" x:Name="ImageBox"/>
             </Canvas>
         </Border>
         <GroupBox Header="Controls" BorderBrush="DarkGreen" BorderThickness="2" HorizontalAlignment="Left" Margin="605,10,0,0" VerticalAlignment="Top" Height="190" Width="226">
@@ -16,7 +16,7 @@
                 <Button Content="Start &amp; Stop" Click="btnStart_OnClick"  HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="83" RenderTransformOrigin="0.62,-1.725"/>
                 <Button Content="Restart" Click="btnRestart_OnClick"  HorizontalAlignment="Left" Margin="121,10,0,0" VerticalAlignment="Top" Width="83" RenderTransformOrigin="0.62,-1.725"/>
                 <Label Content="Speed:" Margin="5,45,151,105"></Label>
-                <Slider Minimum="1" Maximum="100"   Value="100" Height="30" Width="194" ValueChanged="Speed_OnValueChanged" HorizontalAlignment="Left" Margin="10,75,0,75" />
+                <Slider x:Name="Slider" Minimum="1" Maximum="100"   Value="100" Height="30" Width="194" HorizontalAlignment="Left" Margin="10,75,0,75" />
 
             </Grid>
         </GroupBox>
