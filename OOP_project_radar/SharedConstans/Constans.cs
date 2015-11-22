@@ -1,6 +1,6 @@
 ﻿using System.Drawing;
 
-namespace OOP_project_radar
+namespace OOP_project_radar.SharedConstans
 {
     static class Constans
     {

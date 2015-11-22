@@ -7,16 +7,17 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Media.Imaging;
+using OOP_project_radar.SharedConstans;
 using Color = System.Drawing.Color;
 using Image = System.Windows.Controls.Image;
 using Pen = System.Drawing.Pen;
 using Point = System.Drawing.Point;
 
-namespace OOP_project_radar
+namespace OOP_project_radar.Radar
 {
     internal class Radar
     {
-        public System.Windows.Controls.Image ImageBox;
+        public Image ImageBox;
         public bool IsReverted;
 
         private readonly Timer _timer = new Timer();
@@ -28,13 +29,14 @@ namespace OOP_project_radar
         private readonly int _offset;
         private readonly int _bitmapWidth;
         private readonly int _bitmapHeight;
+        private int[,] _landscape;
 
-        private readonly List<Point> _shadowArray = new List<Point>(8);
-        
+        private readonly List<Point> _shadowArray = new List<Point>(9);
+
         public Bitmap Bmp;
         public Graphics G;
 
-        public Radar(System.Windows.Controls.Image imageBox)
+        public Radar(Image imageBox)
         {
             ImageBox = imageBox;
 
@@ -57,11 +59,15 @@ namespace OOP_project_radar
             _timer.Interval = 1; //in millisecond
             _timer.Tick += ReloadRadar;
 
+            _landscape = LandscapeProvider.CreateLandscape();
+
             //Draw start position of radar
             ReloadRadar(null, null);
         }
 
-
+        /// <summary>
+        /// Start's radar scanning
+        /// </summary>
         public void Start()
         {
             if (_timer.Enabled)
@@ -70,21 +76,38 @@ namespace OOP_project_radar
                 _timer.Start();
         }
 
+        /// <summary>
+        /// Sets radar to start position
+        /// </summary>
         public void Restart()
         {
+            _timer.Stop();
+
+            G = Graphics.FromImage(Bmp);
+            G.Clear(Color.Transparent);
+            DrawRadarBody();
+            ImageBox.Source = BitmapToImageSource(Bmp);
+
             _currentDegree = 0;
             _shadowArray.Clear();
 
-            if (!_timer.Enabled)
-                _timer.Start();
+            _timer.Start();
         }
 
+        /// <summary>
+        /// Reverts radar direction of scanning
+        /// </summary>
         public void Revert()
         {
             IsReverted = !IsReverted;
             //_shadowArray.Clear();
         }
 
+        /// <summary>
+        /// Changing speed value handler
+        /// </summary>
+        /// <param name="sender">object sender</param>
+        /// <param name="e">Event args for slider</param>
         public void Speed_OnValueChangedHandler(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             _timer.Stop();
@@ -92,24 +115,27 @@ namespace OOP_project_radar
             _timer.Start();
         }
 
+        /// <summary>
+        /// Reload radar image
+        /// </summary>
+        /// <param name="sender">object sender</param>
+        /// <param name="e">Event args</param>
         public void ReloadRadar(object sender, EventArgs e)
         {
             G = Graphics.FromImage(Bmp);
-            G.Clear(Color.Black);
 
             DrawRadarBody();
 
             //we have shadow with 8 lines
             _shadowArray.Add(new Point(_refresherX, _refresherY));
-            if (_shadowArray.Count == 8)
-            {
-                _shadowArray.Remove(_shadowArray.First());
-            }
 
-            int i = _shadowArray.Capacity - 1;
+            int i = 8 - 1;
             //draw Shadow
             foreach (var point in _shadowArray)
             {
+                //first line is for landscape
+                if (point == _shadowArray.First()) continue;
+               
                 var color = ColorTranslator.FromHtml(Constans.SHADOW_COLORS[i]);
                 var pen = new Pen(new SolidBrush(color), 3f);
 
@@ -117,9 +143,24 @@ namespace OOP_project_radar
                 i--;
             }
 
+            if (_shadowArray.Count == 9)
+            {
+                var needToEraseLinePoint = _shadowArray.First();
+
+                G.DrawLine(new Pen(Color.Black, 3f), _centerX, _centerY, needToEraseLinePoint.X, needToEraseLinePoint.Y);
+
+                _shadowArray.Remove(needToEraseLinePoint);
+
+                //draw landscape
+                if (_currentDegree - 9 >= 0)
+                    DrawLandscape(_currentDegree - 9, needToEraseLinePoint);
+                else
+                    DrawLandscape(_currentDegree + 9, needToEraseLinePoint);
+            }
+            
             //draw HAND
             G.DrawLine(Constans.REFRESHER_PEN, new Point(_centerX, _centerY), new Point(_refresherX, _refresherY));
-
+            
             //load bitmap in picturebox1
             ImageBox.Source = BitmapToImageSource(Bmp);
 
@@ -143,6 +184,33 @@ namespace OOP_project_radar
                     _currentDegree = 0;
                 }
             }
+        }
+
+        public void ChangeLandscape()
+        {
+            _landscape = LandscapeProvider.CreateLandscape();
+        }
+
+        private void DrawLandscape(int currentDegree, Point refresherLinePoint)
+        {
+            var refresherX = refresherLinePoint.X;
+            var refresherY = refresherLinePoint.Y;
+
+            for (var j = 0; j < _landscape.GetLength(1); j++)
+            {
+                var distance = GetDistanse(new Point(_centerX, _centerY),
+                    new Point(_centerX + j * (refresherX - _centerX) / _landscape.GetLength(1), _centerY + j * (refresherY - _centerY) / _landscape.GetLength(1)));
+                var pen = new SolidBrush(LandscapeProvider.ChooseLandscapeColor(distance,_landscape[currentDegree, j]));
+
+                G.FillRectangle(pen, _centerX + j * (refresherX - _centerX) / _landscape.GetLength(1),
+               _centerY + j * (refresherY - _centerY) / _landscape.GetLength(1), 2, 2);
+
+            }
+        }
+
+        private double GetDistanse(Point a, Point b)
+        {
+            return Math.Sqrt(Math.Pow(a.X - b.X, 2) + Math.Pow(a.Y - b.Y, 2));
         }
 
         /// <summary>
