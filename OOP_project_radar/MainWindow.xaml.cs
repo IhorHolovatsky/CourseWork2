@@ -57,11 +57,13 @@ namespace OOP_project_radar
             if (String.IsNullOrEmpty(tb_X.Text) || String.IsNullOrEmpty(tb_X.Text))
             {
                 var rand = new Random();
-                _radar.AddTarget(rand.Next(50, 550), rand.Next(50, 550));
+
+                _radar.AddTarget(rand.Next(50, 550), rand.Next(50, 550), ColorPicker.SelectedColor, ColorPicker.SelectedColorText);
+            
             }
             else
             {
-                _radar.AddTarget(Int32.Parse(tb_X.Text), Int32.Parse(tb_Y.Text));
+                _radar.AddTarget(Int32.Parse(tb_X.Text), Int32.Parse(tb_Y.Text), ColorPicker.SelectedColor, ColorPicker.SelectedColorText);
             }
             targetGrid.ItemsSource = null;
             targetGrid.ItemsSource = _radar.Targets;

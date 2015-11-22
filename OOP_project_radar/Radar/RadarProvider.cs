@@ -32,7 +32,7 @@ namespace OOP_project_radar.Radar
         private readonly int _bitmapHeight;
         private int[,] _landscape;
         private Pen _clearPen = new Pen(Color.Black, 3f);
-      
+
 
         private readonly List<Point> _shadowArray = new List<Point>(9);
 
@@ -132,17 +132,22 @@ namespace OOP_project_radar.Radar
             //we have shadow with 8 lines
             _shadowArray.Add(new Point(_refresherX, _refresherY));
 
-            int i = 8 - 1;
+            int i = _shadowArray.Count - 1;
             //draw Shadow
             foreach (var point in _shadowArray)
             {
                 //first line is for landscape
-                if (point == _shadowArray.First()) continue;
+                if (point == _shadowArray.First())
+                {
+                    i--;
+                    continue;
+                }
 
                 var color = ColorTranslator.FromHtml(Constans.SHADOW_COLORS[i]);
-                var pen = new Pen(new SolidBrush(color), 3f);
 
-                G.DrawLine(pen, new Point(_centerX, _centerY), point);
+
+                //    G.DrawLine(pen, new Point(_centerX, _centerY), point);
+                G.FillPie(new SolidBrush(color), new Rectangle(_offset, _offset, Constans.RADAR_WIDTH, Constans.RADAR_HEIGHT), _currentDegree - 90 - i, 1f);
                 i--;
             }
 
@@ -151,6 +156,8 @@ namespace OOP_project_radar.Radar
                 var needToEraseLinePoint = _shadowArray.First();
 
                 //Eraser line
+                G.FillPie(new SolidBrush(_clearPen.Color), new Rectangle(_offset-6, _offset-6, Constans.RADAR_WIDTH+12, Constans.RADAR_HEIGHT+12), _currentDegree - 90 - 8 + 0.5f, 1f);
+                //landscape filter
                 G.DrawLine(_clearPen, _centerX, _centerY, needToEraseLinePoint.X, needToEraseLinePoint.Y);
 
                 _shadowArray.Remove(needToEraseLinePoint);
@@ -169,17 +176,53 @@ namespace OOP_project_radar.Radar
                         new Point(needToEraseLinePoint.X, needToEraseLinePoint.Y), target.TargetZone))
                     {
                         target.IsDetected = true;
-                        G.FillRectangle(new SolidBrush(target.TargetColor), target.TargetZone);
+
+                        if (Math.Abs(target.Distance) > 0.01 & (target.Distance - GetDistanse(new Point(_centerX, _centerY), new Point(target.X, target.Y))) > 0.01)
+                        {
+                            var speed = (target.Distance -
+                                         GetDistanse(new Point(_centerX, _centerY), new Point(target.X, target.Y))) * Constans.RADAR_FREQUENCY;
+                            target.Speed = speed;
+                        }
+                            
+                        target.Distance = GetDistanse(new Point(_centerX, _centerY), new Point(target.X, target.Y));
+                        target.Angle = Convert.ToInt32(GetAngle(new Point(target.X, target.Y)));
+
+                        var color = Color.FromArgb(target.TargetColor.A, target.TargetColor.R, target.TargetColor.G,
+                            target.TargetColor.B);
+
+                        G.FillRectangle(new SolidBrush(color), target.TargetZone);
+
+                        //if (target.Angle >= 0 & target.Angle < 90)
+                        //{
+                        //    G.DrawString(target.Angle + "*", new Font("Arial", 8), new SolidBrush(color),
+                        //        target.X - 10, target.Y - 10);
+                        //}
+                        //else if (target.Angle >= 90 & target.Angle < 180)
+                        //{
+                        //    G.DrawString(target.Angle + "*", new Font("Arial", 8), new SolidBrush(color),
+                        //       target.X + 10, target.Y - 10);
+                        //}
+                        //else if (target.Angle >= 180 & target.Angle < 270)
+                        //{
+                        //    G.DrawString(target.Angle + "*", new Font("Arial", 8), new SolidBrush(color),
+                        //      target.X + 10, target.Y + 10);
+                        //}
+                        //else
+                        //{
+                        //    G.DrawString(target.Angle + "*", new Font("Arial", 8), new SolidBrush(color),
+                        //      target.X - 10, target.Y + 10);
+                        //}
+
                     }
-                   
+
                 }
-                
+
             }
 
             //draw HAND
-            G.DrawLine(Constans.REFRESHER_PEN, new Point(_centerX, _centerY), new Point(_refresherX, _refresherY));
+            //G.DrawLine(Constans.REFRESHER_PEN, new Point(_centerX, _centerY), new Point(_refresherX, _refresherY));
+            G.FillPie(new SolidBrush(Constans.REFRESHER_PEN.Color), new Rectangle(_offset, _offset, Constans.RADAR_WIDTH, Constans.RADAR_HEIGHT), _currentDegree - 90, 1);
 
-         
 
             //load bitmap in picturebox1
             ImageBox.Source = BitmapToImageSource(Bmp);
@@ -194,8 +237,6 @@ namespace OOP_project_radar.Radar
                 if (_currentDegree == 0)
                 {
                     _currentDegree = 360;
-
-                    //_clearPen.Width = _clearPen.Width == 5f ? 3f : 5f;
                 }
             }
             else
@@ -204,7 +245,6 @@ namespace OOP_project_radar.Radar
                 if (_currentDegree == 360)
                 {
                     _currentDegree = 0;
-                    _clearPen.Width = 5f;
                 }
             }
         }
@@ -214,10 +254,16 @@ namespace OOP_project_radar.Radar
             _landscape = LandscapeProvider.CreateLandscape();
         }
 
-        public void AddTarget(int x, int y)
+        public void AddTarget(int x, int y, System.Windows.Media.Color? color, string colorName)
         {
-            var newTarget = new TargetProvider(x, y);
+            if (color == null)
+            {
+                color = System.Windows.Media.Color.FromArgb(255, 255, 0, 0);
+                colorName = "Red";
+            }
+            var newTarget = new TargetProvider(x, y) {TargetColor = color.Value, ColorName = colorName};
             Targets.Add(newTarget);
+            
 
             _timer.Tick += newTarget.Move;
         }
@@ -246,9 +292,46 @@ namespace OOP_project_radar.Radar
             }
         }
 
-        private double GetDistanse(Point a, Point b)
+        //ToDo: We add as extension for Math class
+        public double GetDistanse(Point a, Point b)
         {
             return Math.Sqrt(Math.Pow(a.X - b.X, 2) + Math.Pow(a.Y - b.Y, 2));
+        }
+
+        //ToDo: We add as extension for Math class
+        private double ToDegree(double radian)
+        {
+            return radian * 180 / Math.PI;
+        }
+
+        //ToDo: We add as extension for Math class
+        private double GetAngle(Point a)
+        {
+            var y = GetDistanse(new Point(_centerX, _centerY), new Point(_centerX, a.Y));
+            var x = GetDistanse(new Point(_centerX, _centerY), new Point(a.X, _centerY));
+
+            if (a.X >= _bitmapWidth / 2 & a.Y < _bitmapHeight / 2)
+            {
+                //I Half
+                return 90 - ToDegree(Math.Atan(y / x));
+            }
+            if (a.X >= _bitmapWidth / 2 & a.Y >= _bitmapHeight / 2)
+            {
+                //IV Half
+                return 90 + ToDegree(Math.Atan(y / x));
+            }
+            if (a.X < _bitmapWidth / 2 & a.Y >= _bitmapHeight / 2)
+            {
+                //III Half   
+                return 270 - ToDegree(Math.Atan(y / x));
+            }
+            if (a.X < _bitmapWidth / 2 & a.Y < _bitmapHeight / 2)
+            {
+                //II Half
+                return 270 + ToDegree(Math.Atan(y / x));
+            }
+
+            return -1;
         }
 
         /// <summary>
@@ -335,6 +418,7 @@ namespace OOP_project_radar.Radar
             }
         }
 
+        //ToDo: We add as extension for Math class
         public static bool LineIntersectsTarget(Point p1, Point p2, Rectangle r)
         {
             return LineIntersectsLine(p1, p2, new Point(r.X, r.Y), new Point(r.X + r.Width, r.Y)) ||
@@ -344,6 +428,7 @@ namespace OOP_project_radar.Radar
                    (r.Contains(p1) && r.Contains(p2));
         }
 
+        //ToDo: We add as extension for Math class
         private static bool LineIntersectsLine(Point l1p1, Point l1p2, Point l2p1, Point l2p2)
         {
             float q = (l1p1.Y - l2p1.Y) * (l2p2.X - l2p1.X) - (l1p1.X - l2p1.X) * (l2p2.Y - l2p1.Y);
@@ -366,6 +451,6 @@ namespace OOP_project_radar.Radar
 
             return true;
         }
-        
+
     }
 }

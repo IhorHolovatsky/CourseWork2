@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Color = System.Windows.Media.Color;
 
 namespace OOP_project_radar.Radar
 {
@@ -13,30 +14,10 @@ namespace OOP_project_radar.Radar
     {
 
 
-        public int X
-        {
-            get
-            {
-                return _x;
-            }
-            set
-            {
-                _x = value;
-                NotifyPropertyChanged("X");
-            }
-        }
-        public int Y
-        {
-            get
-            {
-                return _y;
-            }
-            set
-            {
-                _y = value;
-                NotifyPropertyChanged("Y");
-            }
-        }
+        public int X { get; set; }
+
+        public int Y { get; set; }
+
         public bool IsDetected
         {
             get { return _isDetected; }
@@ -67,6 +48,16 @@ namespace OOP_project_radar.Radar
             }
         }
 
+        public double Distance
+        {
+            get { return _distance; }
+            set
+            {
+                _distance = value;
+                NotifyPropertyChanged("Distance");
+            }
+        }
+
         public Color TargetColor
         {
             get { return _targetColor; }
@@ -77,22 +68,31 @@ namespace OOP_project_radar.Radar
             }
         }
 
+        public string ColorName
+        {
+            get { return _colorName; }
+            set
+            {
+                _colorName = value;
+                NotifyPropertyChanged("ColorName");
+            }
+        }
 
         public Rectangle TargetZone;
 
 
-        private int _x;
-        private int _y;
         private bool _isDetected;
-        private Color _targetColor = Color.Red;
+        private Color _targetColor ;
         private double _speed;
         private int _angle;
+        private double _distance;
+        private string _colorName;
 
         public TargetProvider(int x, int y)
         {
-            _x = x;
-            _y = y;
-            TargetZone = new Rectangle(X, Y, 5, 5);
+            X = x;
+            Y = y;
+            TargetZone = new Rectangle(X, Y, 6, 6);
         }
 
         public void Move(object sender, EventArgs e)

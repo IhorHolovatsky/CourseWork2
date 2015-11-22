@@ -7,6 +7,8 @@ namespace OOP_project_radar.SharedConstans
         public const int RADAR_WIDTH = 550;
         public const int RADAR_HEIGHT = 550;
 
+        public const int RADAR_FREQUENCY = 5;
+
         public const int HAND = RADAR_WIDTH / 2;
 
         public const int FIRST_CIRCLE_WIDTH = RADAR_WIDTH;

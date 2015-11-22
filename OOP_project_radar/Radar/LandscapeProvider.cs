@@ -30,11 +30,11 @@ namespace OOP_project_radar.Radar
 
             if (distance > Constans.RADAR_WIDTH / 4 + rand.Next(0, 50))
             {
-                if (colorValue >= 0 & colorValue < 90)
+                if (colorValue >= 0 & colorValue < 115)
                 {
                     color = Color.Black;
                 }
-                if (colorValue >= 90 & colorValue < 119)
+                if (colorValue >= 115 & colorValue < 119)
                 {
                     color = ColorTranslator.FromHtml(Constans.SHADOW_COLORS[7]);
                 }
@@ -57,11 +57,11 @@ namespace OOP_project_radar.Radar
             }
             else
             {
-                if (colorValue >= 0 & colorValue < 50)
+                if (colorValue >= 0 & colorValue < 80)
                 {
                     color = Color.Black;
                 }
-                if (colorValue >= 50 & colorValue < 90)
+                if (colorValue >= 80 & colorValue < 90)
                 {
                     color = ColorTranslator.FromHtml(Constans.SHADOW_COLORS[7]);
                 }
