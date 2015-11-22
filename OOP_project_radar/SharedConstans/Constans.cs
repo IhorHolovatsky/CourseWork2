@@ -23,7 +23,7 @@ namespace OOP_project_radar.SharedConstans
 
         public static readonly Pen AXIS_PEN = new Pen(Color.Aqua, 0.01f);
         public static readonly Pen CIRCLE_PEN = new Pen(Color.LightGreen, 0.03f);
-        public static readonly Pen REFRESHER_PEN = new Pen(Color.LimeGreen, 3f);
+        public static readonly Pen REFRESHER_PEN = new Pen(Color.LimeGreen, 1f);
 
         public static readonly string[] SHADOW_COLORS = 
         {

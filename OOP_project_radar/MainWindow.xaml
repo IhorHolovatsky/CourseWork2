@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Class="OOP_project_radar.MainWindow"
-        Title="MainWindow" Height="696.139" Width="871.546" Background="WhiteSmoke">
+        Title="MainWindow" Height="696.139" Width="1003.546" Background="WhiteSmoke">
     <Grid>
 
         <Border x:Name="CanvasBorder" Margin="0,0,189,66">
@@ -10,17 +10,45 @@
                 <Image Width="600" Height="600" x:Name="ImageBox"/>
             </Canvas>
         </Border>
-        <GroupBox Header="Controls" BorderBrush="DarkGreen" BorderThickness="2" HorizontalAlignment="Left" Margin="605,10,0,0" VerticalAlignment="Top" Height="190" Width="249">
-            <Grid Height="180" VerticalAlignment="Top" Margin="0,0,-2,-12">
-                <Button Content="Revert" Click="btnRevert_OnClick"  HorizontalAlignment="Left" Margin="10,110,0,0" VerticalAlignment="Top" Width="83" RenderTransformOrigin="0.62,-1.725"/>
+        <GroupBox Header="Controls" BorderBrush="DarkGreen" BorderThickness="2" HorizontalAlignment="Left" Margin="605,10,0,0" VerticalAlignment="Top" Height="190" Width="381">
+            <Grid Height="180" VerticalAlignment="Top" Margin="10,0,-2,-12">
+                <Button Content="Revert" Click="btnRevert_OnClick"  HorizontalAlignment="Left" Margin="10,115,0,0" VerticalAlignment="Top" Width="83" RenderTransformOrigin="0.62,-1.725"/>
                 <Button Content="Start &amp; Stop" Click="btnStart_OnClick"  HorizontalAlignment="Left" Margin="10,15,0,0" VerticalAlignment="Top" Width="83" RenderTransformOrigin="0.62,-1.725"/>
-                <Button Content="Restart" Click="btnRestart_OnClick"  HorizontalAlignment="Left" Margin="146,15,0,0" VerticalAlignment="Top" Width="83" RenderTransformOrigin="0.62,-1.725"/>
-                <Button Content="Change Landscape" Click="btnChangeLandscape_OnClick"  HorizontalAlignment="Left" Margin="123,110,0,0" VerticalAlignment="Top" Width="106" RenderTransformOrigin="0.62,-1.725"/>
+                <Button Content="Restart" Click="btnRestart_OnClick"  HorizontalAlignment="Left" Margin="268,20,0,0" VerticalAlignment="Top" Width="83" RenderTransformOrigin="0.62,-1.725"/>
+                <Button Content="Change Landscape" Click="btnChangeLandscape_OnClick"  HorizontalAlignment="Left" Margin="245,120,0,0" VerticalAlignment="Top" Width="106" RenderTransformOrigin="0.62,-1.725"/>
                 <Label Content="Speed:" Margin="5,45,151,105"></Label>
-                <Slider x:Name="Slider" Minimum="1" Maximum="100"   Value="100" Height="30" Width="194" HorizontalAlignment="Left" Margin="35,75,0,75" />
+                <Slider x:Name="Slider" Minimum="1" Maximum="100"   Value="100" Width="341" HorizontalAlignment="Left" Margin="10,75,0,70" />
 
             </Grid>
         </GroupBox>
 
+        <GroupBox Header="Targets" BorderBrush="DarkGreen" BorderThickness="2" HorizontalAlignment="Left" Margin="605,205,0,0" VerticalAlignment="Top" Height="394" Width="381">
+            <Grid Height="364" VerticalAlignment="Top" Margin="-1,0,-2,0">
+                <DataGrid AutoGenerateColumns="False" 
+          HorizontalAlignment="Left" 
+          Name="targetGrid" 
+          Width="352" Margin="10,10,0,95"
+                       >
+                    <DataGrid.Columns >
+                        <DataGridTextColumn Binding="{Binding Path=TargetColor}" Header="Color" MinWidth="80" />
+
+                        <DataGridTextColumn Binding="{Binding Path=X}" Header="X" MinWidth="30" />
+                        <DataGridTextColumn Binding="{Binding Path=Y}" Header="Y" MinWidth="30" />
+                        <DataGridTextColumn Binding="{Binding Path=Angle}" Header="Angle" MinWidth="30" />
+                        <DataGridTextColumn Binding="{Binding Path=Speed}" Header="Speed" MinWidth="50" />
+                        <DataGridTextColumn Binding="{Binding Path=IsDetected}" Header="IsDetected" MinWidth="50" />
+                    </DataGrid.Columns>
+                </DataGrid>
+                <Button Content="Add" Click="btnAdd_OnClick"  HorizontalAlignment="Left" Margin="10,339,0,0" VerticalAlignment="Top" Width="83" RenderTransformOrigin="0.62,-1.725"/>
+                <Button Content="Remove" Click="btnRemove_OnClick"  HorizontalAlignment="Left" Margin="279,339,0,0" VerticalAlignment="Top" Width="83" RenderTransformOrigin="0.62,-1.725"/>
+                <TextBox PreviewTextInput="TextBoxPasting" x:Name="tb_X" HorizontalAlignment="Left" Height="23" Margin="36,274,0,0" TextWrapping="Wrap"  Text="" VerticalAlignment="Top" Width="120"/>
+                <TextBox x:Name="tb_Color" HorizontalAlignment="Left" Height="23" Margin="227,274,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="135"/>
+                <TextBox PreviewTextInput="TextBoxPasting" x:Name="tb_Y"  HorizontalAlignment="Left" Height="23" Margin="36,303,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
+                <Label Content="X:" HorizontalAlignment="Left" Margin="10,275,0,0" VerticalAlignment="Top" Width="21"/>
+                <Label Content="Y:" HorizontalAlignment="Left" Margin="10,303,0,0" VerticalAlignment="Top" Width="21"/>
+                <Label Content="Color:" HorizontalAlignment="Left" Margin="180,271,0,0" VerticalAlignment="Top" Width="42"/>
+            </Grid>
+        </GroupBox>
+        <Label Content="Label" HorizontalAlignment="Left" Margin="878,641,0,0" VerticalAlignment="Top"/>
     </Grid>
 </Window>

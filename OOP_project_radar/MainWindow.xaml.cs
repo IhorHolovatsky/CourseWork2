@@ -1,5 +1,12 @@
-﻿using System.Windows;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using System.Windows;
+using System.Windows.Forms;
+using System.Windows.Input;
 using OOP_project_radar.Radar;
+using MessageBox = System.Windows.MessageBox;
 
 
 namespace OOP_project_radar
@@ -15,7 +22,7 @@ namespace OOP_project_radar
         {
             InitializeComponent();
 
-           //LandscapeProvider.CreateLandscape();
+            //LandscapeProvider.CreateLandscape();
         }
 
         private void Canvas_Loaded(object sender, RoutedEventArgs e)
@@ -45,11 +52,55 @@ namespace OOP_project_radar
             _radar.Restart();
         }
 
+        private void btnAdd_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (String.IsNullOrEmpty(tb_X.Text) || String.IsNullOrEmpty(tb_X.Text))
+            {
+                var rand = new Random();
+                _radar.AddTarget(rand.Next(50, 550), rand.Next(50, 550));
+            }
+            else
+            {
+                _radar.AddTarget(Int32.Parse(tb_X.Text), Int32.Parse(tb_Y.Text));
+            }
+            targetGrid.ItemsSource = null;
+            targetGrid.ItemsSource = _radar.Targets;
+
+        }
+
+
+        private void btnRemove_OnClick(object sender, RoutedEventArgs e)
+        {
+            var items = targetGrid.SelectedItems;
+
+            foreach (TargetProvider item in items)
+            {
+                _radar.RemoveTarget(item);
+            }
+
+            targetGrid.ItemsSource = null;
+            targetGrid.ItemsSource = _radar.Targets;
+
+        }
+
         #endregion
 
         private void btnChangeLandscape_OnClick(object sender, RoutedEventArgs e)
         {
-           _radar.ChangeLandscape();
+            _radar.ChangeLandscape();
+        }
+
+        private void TextBoxPasting(object sender, TextCompositionEventArgs e)
+        {
+           if (!IsTextAllowed(e.Text))
+            {
+                e.Handled = true;
+            }
+        }
+        private static bool IsTextAllowed(string text)
+        {
+            Regex regex = new Regex("[^0-9.-]+"); //regex that matches disallowed text
+            return !regex.IsMatch(text);
         }
     }
 }

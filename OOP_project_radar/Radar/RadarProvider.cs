@@ -19,6 +19,7 @@ namespace OOP_project_radar.Radar
     {
         public Image ImageBox;
         public bool IsReverted;
+        public List<TargetProvider> Targets = new List<TargetProvider>();
 
         private readonly Timer _timer = new Timer();
         private int _currentDegree; //in degree
@@ -30,6 +31,8 @@ namespace OOP_project_radar.Radar
         private readonly int _bitmapWidth;
         private readonly int _bitmapHeight;
         private int[,] _landscape;
+        private Pen _clearPen = new Pen(Color.Black, 3f);
+      
 
         private readonly List<Point> _shadowArray = new List<Point>(9);
 
@@ -135,7 +138,7 @@ namespace OOP_project_radar.Radar
             {
                 //first line is for landscape
                 if (point == _shadowArray.First()) continue;
-               
+
                 var color = ColorTranslator.FromHtml(Constans.SHADOW_COLORS[i]);
                 var pen = new Pen(new SolidBrush(color), 3f);
 
@@ -147,7 +150,8 @@ namespace OOP_project_radar.Radar
             {
                 var needToEraseLinePoint = _shadowArray.First();
 
-                G.DrawLine(new Pen(Color.Black, 3f), _centerX, _centerY, needToEraseLinePoint.X, needToEraseLinePoint.Y);
+                //Eraser line
+                G.DrawLine(_clearPen, _centerX, _centerY, needToEraseLinePoint.X, needToEraseLinePoint.Y);
 
                 _shadowArray.Remove(needToEraseLinePoint);
 
@@ -156,11 +160,27 @@ namespace OOP_project_radar.Radar
                     DrawLandscape(_currentDegree - 9, needToEraseLinePoint);
                 else
                     DrawLandscape(_currentDegree + 9, needToEraseLinePoint);
+
+
+                //draw targets
+                foreach (var target in Targets)
+                {
+                    if (LineIntersectsTarget(new Point(_centerX, _centerY),
+                        new Point(needToEraseLinePoint.X, needToEraseLinePoint.Y), target.TargetZone))
+                    {
+                        target.IsDetected = true;
+                        G.FillRectangle(new SolidBrush(target.TargetColor), target.TargetZone);
+                    }
+                   
+                }
+                
             }
-            
+
             //draw HAND
             G.DrawLine(Constans.REFRESHER_PEN, new Point(_centerX, _centerY), new Point(_refresherX, _refresherY));
-            
+
+         
+
             //load bitmap in picturebox1
             ImageBox.Source = BitmapToImageSource(Bmp);
 
@@ -174,6 +194,8 @@ namespace OOP_project_radar.Radar
                 if (_currentDegree == 0)
                 {
                     _currentDegree = 360;
+
+                    //_clearPen.Width = _clearPen.Width == 5f ? 3f : 5f;
                 }
             }
             else
@@ -182,6 +204,7 @@ namespace OOP_project_radar.Radar
                 if (_currentDegree == 360)
                 {
                     _currentDegree = 0;
+                    _clearPen.Width = 5f;
                 }
             }
         }
@@ -189,6 +212,21 @@ namespace OOP_project_radar.Radar
         public void ChangeLandscape()
         {
             _landscape = LandscapeProvider.CreateLandscape();
+        }
+
+        public void AddTarget(int x, int y)
+        {
+            var newTarget = new TargetProvider(x, y);
+            Targets.Add(newTarget);
+
+            _timer.Tick += newTarget.Move;
+        }
+
+        public void RemoveTarget(TargetProvider target)
+        {
+            _timer.Tick -= target.Move;
+
+            Targets.Remove(target);
         }
 
         private void DrawLandscape(int currentDegree, Point refresherLinePoint)
@@ -200,7 +238,7 @@ namespace OOP_project_radar.Radar
             {
                 var distance = GetDistanse(new Point(_centerX, _centerY),
                     new Point(_centerX + j * (refresherX - _centerX) / _landscape.GetLength(1), _centerY + j * (refresherY - _centerY) / _landscape.GetLength(1)));
-                var pen = new SolidBrush(LandscapeProvider.ChooseLandscapeColor(distance,_landscape[currentDegree, j]));
+                var pen = new SolidBrush(LandscapeProvider.ChooseLandscapeColor(distance, _landscape[currentDegree, j]));
 
                 G.FillRectangle(pen, _centerX + j * (refresherX - _centerX) / _landscape.GetLength(1),
                _centerY + j * (refresherY - _centerY) / _landscape.GetLength(1), 2, 2);
@@ -296,5 +334,38 @@ namespace OOP_project_radar.Radar
                 return bitmapimage;
             }
         }
+
+        public static bool LineIntersectsTarget(Point p1, Point p2, Rectangle r)
+        {
+            return LineIntersectsLine(p1, p2, new Point(r.X, r.Y), new Point(r.X + r.Width, r.Y)) ||
+                   LineIntersectsLine(p1, p2, new Point(r.X + r.Width, r.Y), new Point(r.X + r.Width, r.Y + r.Height)) ||
+                   LineIntersectsLine(p1, p2, new Point(r.X + r.Width, r.Y + r.Height), new Point(r.X, r.Y + r.Height)) ||
+                   LineIntersectsLine(p1, p2, new Point(r.X, r.Y + r.Height), new Point(r.X, r.Y)) ||
+                   (r.Contains(p1) && r.Contains(p2));
+        }
+
+        private static bool LineIntersectsLine(Point l1p1, Point l1p2, Point l2p1, Point l2p2)
+        {
+            float q = (l1p1.Y - l2p1.Y) * (l2p2.X - l2p1.X) - (l1p1.X - l2p1.X) * (l2p2.Y - l2p1.Y);
+            float d = (l1p2.X - l1p1.X) * (l2p2.Y - l2p1.Y) - (l1p2.Y - l1p1.Y) * (l2p2.X - l2p1.X);
+
+            if (d == 0)
+            {
+                return false;
+            }
+
+            float r = q / d;
+
+            q = (l1p1.Y - l2p1.Y) * (l1p2.X - l1p1.X) - (l1p1.X - l2p1.X) * (l1p2.Y - l1p1.Y);
+            float s = q / d;
+
+            if (r < 0 || r > 1 || s < 0 || s > 1)
+            {
+                return false;
+            }
+
+            return true;
+        }
+        
     }
 }
